@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f766e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>SPC Trainer — Statistical Process Control</title>
+<script>try{if(localStorage.getItem('spcTheme')==='dark'){document.documentElement.setAttribute('data-theme','dark');var mc=document.querySelector('meta[name="theme-color"]');if(mc)mc.setAttribute('content','#0f172a');}}catch(e){}try{if(localStorage.getItem('spcNav')==='collapsed')document.documentElement.setAttribute('data-nav','collapsed');}catch(e){}</script>
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body class="app-body">
+<header class="app-header">
+  <div class="header-inner">
+    <div class="header-row">
+      <h1>📈 SPC Trainer</h1>
+      <div class="header-actions">
+        <button type="button" class="nav-toggle" id="navToggle" aria-label="Toggle navigation" title="Menu" data-i18n-title="ui.menu" data-i18n-aria="ui.menu">☰</button>
+        <button type="button" class="theme-btn" id="themeBtn" aria-label="Toggle dark mode" title="Toggle dark mode" data-i18n-title="ui.dark" data-i18n-aria="ui.dark">🌙</button>
+        <select id="langSel" class="lang-select" aria-label="Language" data-i18n-aria="ui.lang">
+          <option value="en">English</option>
+          <option value="hi">हिंदी</option>
+          <option value="bn">বাংলা</option>
+          <option value="ar">العربية</option>
+        </select>
+      </div>
+    </div>
+    <p data-i18n="hdr.sub">Learn &amp; analyze Statistical Process Control on your phone</p>
+    <div class="user-bar" id="userBar">
+      <span class="user-chip" id="userChip" hidden></span>
+      <button type="button" class="ub-btn" id="btnChangePw" hidden data-i18n="u.pw">Password</button>
+      <a class="ub-btn" id="btnAdmin" href="/admin" hidden data-i18n="u.admin">Admin</a>
+      <button type="button" class="ub-btn ub-danger" id="btnLogout" hidden data-i18n="u.logout">Logout</button>
+    </div>
+  </div>
+</header>
+
+<!-- Change password modal -->
+<div class="pw-modal-back" id="pwModal" style="display:none;">
+  <div class="modal-card">
+    <h3 data-i18n="u.pwTitle">Change password</h3>
+    <label class="field-label" data-i18n="u.pwCur">Current password</label>
+    <input type="password" class="input" id="cpCurrent" autocomplete="current-password">
+    <label class="field-label" data-i18n="u.pwNew">New password (min 6 chars)</label>
+    <input type="password" class="input" id="cpNew" autocomplete="new-password">
+    <label class="field-label" data-i18n="u.pwNew2">Confirm new password</label>
+    <input type="password" class="input" id="cpNew2" autocomplete="new-password">
+    <div class="btn-row">
+      <button type="button" class="btn btn-outline" id="cpCancel" data-i18n="btn.cancel">Cancel</button>
+      <button type="button" class="btn btn-primary" id="cpSave" data-i18n="btn.save">Save</button>
+    </div>
+  </div>
+</div>
+<div class="toast-msg" id="appToast" style="display:none;"></div>
+
+<div class="nav-backdrop" id="navBackdrop"></div>
+
+<nav class="tab-bar" id="tabBar">
+  <div class="side-brand"><span class="side-brand-ico">📈</span><b>SPC Trainer</b></div>
+  <button class="tab-btn active" data-tab="learn" data-i18n="tab.learn">📚 Learn</button>
+  <button class="tab-btn" data-tab="charts" data-i18n="tab.charts">📊 Charts</button>
+  <button class="tab-btn" data-tab="capability" data-i18n="tab.capability">🎯 Cpk</button>
+  <button class="tab-btn" data-tab="tools" data-i18n="tab.tools">🧰 Tools</button>
+  <button class="tab-btn" data-tab="quiz" data-i18n="tab.quiz">🧠 Quiz</button>
+</nav>
+
+<main>
+  <!-- LEARN -->
+  <section class="tab-panel active" id="tab-learn">
+    <div class="lesson-nav">
+      <button id="prevLesson" class="btn btn-outline" data-i18n="lesson.prev">◀ Prev</button>
+      <span class="lesson-progress" id="lessonProgress">1 / 8</span>
+      <button id="nextLesson" class="btn btn-outline" data-i18n="lesson.next">Next ▶</button>
+    </div>
+    <article class="card lesson-card" id="lessonCard"></article>
+    <div class="lesson-dots" id="lessonDots"></div>
+  </section>
+
+  <!-- CHARTS -->
+  <section class="tab-panel" id="tab-charts">
+    <div class="card">
+      <h2 data-i18n="charts.title">Control Chart Analysis</h2>
+      <label class="field-label" data-i18n="charts.chartType">Chart type</label>
+      <select id="chartType" class="input">
+        <optgroup label="Variables (continuous data)" data-i18n="opt.var">
+          <option value="xbar-r" data-i18n="ct.xbarR">X̄ – R Chart (subgroups)</option>
+          <option value="xbar-s" data-i18n="ct.xbarS">X̄ – S Chart (subgroups)</option>
+          <option value="i-mr" data-i18n="ct.imr">Individuals – Moving Range (I-MR)</option>
+        </optgroup>
+        <optgroup label="Attributes (count data)" data-i18n="opt.attr">
+          <option value="p" data-i18n="ct.p">p Chart (fraction defective)</option>
+          <option value="np" data-i18n="ct.np">np Chart (count defective)</option>
+          <option value="c" data-i18n="ct.c">c Chart (count of defects)</option>
+          <option value="u" data-i18n="ct.u">u Chart (defects per unit)</option>
+        </optgroup>
+        <optgroup label="Advanced charts" data-i18n="opt.adv">
+          <option value="ewma" data-i18n="ct.ewma">EWMA Chart (small-shift detection)</option>
+          <option value="cusum" data-i18n="ct.cusum">CUSUM Chart (cumulative sum)</option>
+          <option value="laney-p" data-i18n="ct.laneyP">Laney p′ Chart (overdispersion)</option>
+          <option value="laney-u" data-i18n="ct.laneyU">Laney u′ Chart (overdispersion)</option>
+        </optgroup>
+      </select>
+
+      <div class="param-row" id="paramRow" hidden>
+        <div class="param" id="paramLambdaWrap">
+          <label class="field-label" data-i18n="param.lambda">λ lambda</label>
+          <input type="number" id="paramLambda" class="input" value="0.2" step="0.05" min="0.05" max="1">
+        </div>
+        <div class="param" id="paramLWrap">
+          <label class="field-label" data-i18n="param.L">L width</label>
+          <input type="number" id="paramL" class="input" value="3" step="0.1" min="1" max="5">
+        </div>
+        <div class="param" id="paramKWrap">
+          <label class="field-label" data-i18n="param.k">k allowance</label>
+          <input type="number" id="paramK" class="input" value="0.5" step="0.1" min="0.1" max="2">
+        </div>
+        <div class="param" id="paramHWrap">
+          <label class="field-label" data-i18n="param.h">h interval</label>
+          <input type="number" id="paramH" class="input" value="4" step="0.5" min="2" max="10">
+        </div>
+      </div>
+      <p class="param-help" id="paramHelp" hidden></p>
+
+      <label class="field-label" id="dataHint" data-i18n="hint.xbar-r">One row per subgroup — tap cells to enter data</label>
+      <div class="sheet-toolbar">
+        <button type="button" class="chip" id="btnAddRow" data-i18n="sh.addRow">＋ Row</button>
+        <button type="button" class="chip" id="btnDelRow" data-i18n="sh.delRow">－ Row</button>
+        <button type="button" class="chip" id="btnAddCol" data-i18n="sh.addCol">＋ Col</button>
+        <button type="button" class="chip" id="btnDelCol" data-i18n="sh.delCol">－ Col</button>
+        <span class="sheet-size" id="sheetSize"></span>
+      </div>
+      <div class="gen-row">
+        <span class="gen-label" data-i18n="gen.label">⚡ Demo data:</span>
+        <button type="button" class="chip gen" data-pattern="in" data-i18n="gen.in">In control</button>
+        <button type="button" class="chip gen" data-pattern="shift" data-i18n="gen.shift">Mean shift</button>
+        <button type="button" class="chip gen" data-pattern="trend" data-i18n="gen.trend">Trend</button>
+        <button type="button" class="chip gen" data-pattern="cycle" data-i18n="gen.cycle">Cycle</button>
+        <button type="button" class="chip gen" data-pattern="mixture" data-i18n="gen.mixture">Mixture</button>
+      </div>
+      <div class="sheet-wrap">
+        <table class="sheet" id="dataSheet"></table>
+      </div>
+
+      <div class="btn-row">
+        <button id="btnSample" class="btn btn-outline" data-i18n="btn.sample">Load Sample</button>
+        <button id="btnImport" class="btn btn-outline" data-i18n="btn.import">Import CSV</button>
+        <button id="btnReset" class="btn btn-outline" data-i18n="btn.reset">Reset</button>
+        <button id="btnAnalyze" class="btn btn-primary" data-i18n="btn.analyze">Analyze ▶</button>
+      </div>
+      <details class="paste-box">
+        <summary data-i18n="paste.summary">Or paste data as text</summary>
+        <textarea id="dataPaste" class="input textarea" rows="5" placeholder="10.1, 10.3, 10.2, 10.0&#10;10.2, 10.1, 10.4, 10.2&#10;..."></textarea>
+        <button type="button" id="btnPasteLoad" class="btn btn-outline" data-i18n="btn.conv">Convert to grid</button>
+      </details>
+      <input type="file" id="fileInput" accept=".csv,.txt" hidden>
+    </div>
+
+    <div class="card" id="resultCard" hidden>
+      <div class="chart-title" id="chartTitle"></div>
+      <div class="chart-zoom">
+        <div class="chart-zoom-hint" data-i18n="zoom.hint">Pinch / scroll to zoom · drag to pan · double-tap ⌂ to reset</div>
+        <canvas id="mainChart"></canvas>
+        <div class="chart-zoom-btns" aria-label="Zoom controls" data-i18n-aria="ui.zoomCtrls">
+          <button type="button" data-zoom="in" title="Zoom in" data-i18n-title="ui.zoomIn">+</button>
+          <button type="button" data-zoom="out" title="Zoom out" data-i18n-title="ui.zoomOut">−</button>
+          <button type="button" data-zoom="reset" title="Reset zoom" data-i18n-title="ui.zoomReset">⌂</button>
+        </div>
+      </div>
+      <div id="statusBadge" class="badge"></div>
+      <div class="stats-grid" id="statsGrid"></div>
+    </div>
+
+    <div class="card" id="mrCard" hidden>
+      <div class="chart-title" id="mrTitle"></div>
+      <div class="chart-zoom">
+        <canvas id="mrChart"></canvas>
+        <div class="chart-zoom-btns">
+          <button type="button" data-zoom="in">+</button>
+          <button type="button" data-zoom="out">−</button>
+          <button type="button" data-zoom="reset">⌂</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" id="violationsCard" hidden>
+      <h3 data-i18n="viol.title">⚠️ Out-of-Control Signals</h3>
+      <ul class="violation-list" id="violationList"></ul>
+    </div>
+  </section>
+
+  <!-- CAPABILITY -->
+  <section class="tab-panel" id="tab-capability">
+    <div class="card">
+      <h2 data-i18n="cap.title">Process Capability</h2>
+      <p class="hint" data-i18n="cap.hint">Enter measurements in the worksheet below (reuse chart data with "Load Sample"), then set spec limits.</p>
+      <label class="field-label" data-i18n="cap.sheet">Measurements worksheet</label>
+      <div class="sheet-toolbar">
+        <button type="button" class="chip" id="btnCapAddRow" data-i18n="sh.addRow">＋ Row</button>
+        <button type="button" class="chip" id="btnCapDelRow" data-i18n="sh.delRow">－ Row</button>
+        <button type="button" class="chip" id="btnCapClear" data-i18n="btn.clear">Clear</button>
+        <span class="sheet-size" id="capSheetSize"></span>
+      </div>
+      <div class="sheet-wrap">
+        <table class="sheet" id="capSheet"></table>
+      </div>
+      <div class="field-row">
+        <div>
+          <label class="field-label">LSL</label>
+          <input type="number" id="lsl" class="input" step="any" placeholder="9.8">
+        </div>
+        <div>
+          <label class="field-label" data-i18n="cap.target">Target</label>
+          <input type="number" id="target" class="input" step="any" placeholder="10.0">
+        </div>
+        <div>
+          <label class="field-label">USL</label>
+          <input type="number" id="usl" class="input" step="any" placeholder="10.2">
+        </div>
+      </div>
+      <div class="btn-row">
+        <button id="btnCapSample" class="btn btn-outline" data-i18n="btn.sample">Load Sample</button>
+        <button id="btnCapReset" class="btn btn-outline" data-i18n="btn.reset">Reset</button>
+        <button id="btnCapCalc" class="btn btn-primary" data-i18n="btn.calculate">Calculate ▶</button>
+      </div>
+    </div>
+
+    <div class="card" id="capResult" hidden>
+      <div class="chart-zoom">
+        <canvas id="capChart"></canvas>
+        <div class="chart-zoom-btns">
+          <button type="button" data-zoom="in">+</button>
+          <button type="button" data-zoom="out">−</button>
+          <button type="button" data-zoom="reset">⌂</button>
+        </div>
+      </div>
+      <div class="stats-grid" id="capGrid"></div>
+      <div id="capVerdict" class="verdict"></div>
+      <div class="hist-legend"><span class="swatch lsl"></span>LSL <span class="swatch usl"></span>USL <span class="swatch cl"></span><span data-i18n="hist.mean">Mean</span></div>
+    </div>
+
+    <div class="card" id="normCard" hidden>
+      <h3 data-i18n="norm.title">📐 Normality &amp; Confidence (advanced)</h3>
+      <div id="adResult" class="ad-result"></div>
+      <div class="stats-grid" id="ciGrid"></div>
+      <p class="hint" id="ciHint"></p>
+    </div>
+
+    <div class="card">
+      <h3 data-i18n="howto.title">How to read the indices</h3>
+      <table class="mini-table" id="capTable">
+        <tbody id="capTableBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- TOOLS -->
+  <section class="tab-panel" id="tab-tools">
+    <div class="card">
+      <h3 data-i18n="tools.gage.title">🔬 Gage R&amp;R Study</h3>
+      <p class="hint" data-i18n="tools.gage.hint">Measurement System Analysis — parts × operators × repeat trials. Load the sample or enter your own study.</p>
+      <div class="field-row three">
+        <div>
+          <label class="field-label" data-i18n="tools.parts">Parts</label>
+          <input type="number" id="gParts" class="input" value="5" min="2" max="20">
+        </div>
+        <div>
+          <label class="field-label" data-i18n="tools.ops">Operators</label>
+          <input type="number" id="gOps" class="input" value="3" min="2" max="5">
+        </div>
+        <div>
+          <label class="field-label" data-i18n="tools.trials">Trials</label>
+          <input type="number" id="gTrials" class="input" value="2" min="2" max="3">
+        </div>
+      </div>
+      <div class="btn-row">
+        <button id="btnGSetup" class="btn btn-outline" data-i18n="btn.buildGrid">Build Grid</button>
+        <button id="btnGSample" class="btn btn-outline" data-i18n="btn.sample">Load Sample</button>
+        <button id="btnGCalc" class="btn btn-primary" data-i18n="btn.analyze">Analyze ▶</button>
+      </div>
+      <div class="sheet-wrap" id="gageSheetWrap" hidden>
+        <table class="sheet" id="gageSheet"></table>
+      </div>
+    </div>
+
+    <div class="card" id="gageResult" hidden>
+      <h3 data-i18n="tools.gageResults">Gage R&amp;R Results</h3>
+      <div class="badge" id="gageBadge"></div>
+      <div class="stats-grid" id="gageGrid"></div>
+      <div class="gage-bars" id="gageBars"></div>
+      <p class="hint" id="gageNote"></p>
+    </div>
+
+    <div class="card">
+      <h3 data-i18n="tools.pareto.title">📊 Pareto Chart</h3>
+      <p class="hint" data-i18n="tools.pareto.hint">Defect categories ranked — find the vital few (cumulative 80%).</p>
+      <div class="sheet-toolbar">
+        <button type="button" class="chip" id="btnParAddRow" data-i18n="sh.addRow">＋ Row</button>
+        <button type="button" class="chip" id="btnParDelRow" data-i18n="sh.delRow">－ Row</button>
+        <button type="button" class="chip" id="btnParSample" data-i18n="btn.sample">Load Sample</button>
+        <span class="sheet-size" id="parSheetSize"></span>
+      </div>
+      <div class="sheet-wrap">
+        <table class="sheet sheet-wide" id="parSheet"></table>
+      </div>
+      <div class="btn-row">
+        <button id="btnParDraw" class="btn btn-primary" data-i18n="btn.drawPareto">Draw Pareto ▶</button>
+      </div>
+      <div id="parResult" hidden>
+        <div class="chart-zoom">
+          <canvas id="parChart"></canvas>
+          <div class="chart-zoom-btns">
+            <button type="button" data-zoom="in">+</button>
+            <button type="button" data-zoom="out">−</button>
+            <button type="button" data-zoom="reset">⌂</button>
+          </div>
+        </div>
+        <div class="stats-grid" id="parGrid"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3 data-i18n="tools.planner.title">🎯 Cpk Improvement Planner</h3>
+      <p class="hint" data-i18n="tools.planner.hint">Given today's mean &amp; sigma, what does it take to reach your target Cpk?</p>
+      <div class="field-row">
+        <div>
+          <label class="field-label" data-i18n="cap.mean">Mean</label>
+          <input type="number" id="planMean" class="input" step="any">
+        </div>
+        <div>
+          <label class="field-label" data-i18n="tools.sigma">Sigma σ</label>
+          <input type="number" id="planSigma" class="input" step="any">
+        </div>
+        <div>
+          <label class="field-label" data-i18n="tools.targetCpk">Target Cpk</label>
+          <input type="number" id="planTarget" class="input" value="1.33" step="0.1">
+        </div>
+      </div>
+      <div class="field-row">
+        <div>
+          <label class="field-label">LSL</label>
+          <input type="number" id="planLsl" class="input" step="any">
+        </div>
+        <div>
+          <label class="field-label">USL</label>
+          <input type="number" id="planUsl" class="input" step="any">
+        </div>
+        <div class="plan-cta">
+          <button id="btnPlan" class="btn btn-primary" data-i18n="btn.plan">Plan ▶</button>
+        </div>
+      </div>
+      <div class="btn-row">
+        <button id="btnPlanFromCap" class="btn btn-outline" data-i18n="btn.useCap">Use capability data</button>
+      </div>
+      <div id="planResult" class="plan-result" hidden></div>
+    </div>
+  </section>
+
+  <!-- QUIZ -->
+  <section class="tab-panel" id="tab-quiz">
+    <div class="card" id="quizCard">
+      <div class="quiz-progress" id="quizProgress"></div>
+      <h3 id="quizQuestion"></h3>
+      <div id="quizOptions" class="quiz-options"></div>
+      <div id="quizFeedback" class="quiz-feedback"></div>
+      <div class="btn-row">
+        <button id="btnQuizNext" class="btn btn-primary" hidden data-i18n="btn.next">Next ▶</button>
+        <button id="btnQuizRestart" class="btn btn-outline" hidden data-i18n="btn.restart">Restart Quiz</button>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="app-footer" data-i18n="footer">SPC Trainer · works offline · data stays on your device</footer>
+
+<script src="js/stats.js"></script>
+<script src="js/charts.js"></script>
+<script src="js/zoom.js"></script>
+<script src="js/i18n.js"></script>
+<script src="js/lessons.js"></script>
+<script src="js/translations_ar.js"></script>
+<script src="js/translations_hi.js"></script>
+<script src="js/translations_bn.js"></script>
+<script src="js/quiz.js"></script>
+<script src="js/app.js"></script>
+<script src="js/auth.js"></script>
+</body>
+</html>

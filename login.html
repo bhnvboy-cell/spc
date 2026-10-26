@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0f766e">
+<title>Login — SPC Trainer</title>
+<link rel="stylesheet" href="css/styles.css">
+<style>
+  body.auth-body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    display: flex;
+    padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right))
+             max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+    background: linear-gradient(160deg, #0f766e 0%, #115e59 45%, #0f172a 100%);
+  }
+  .auth-card {
+    margin: auto;            /* centers without clipping when card is taller than viewport */
+    width: 100%;
+    max-width: 380px;
+    background: #fff;
+    border-radius: 18px;
+    box-shadow: 0 20px 50px rgba(0,0,0,.25);
+    padding: 28px 24px 24px;
+  }
+  .auth-logo {
+    text-align: center;
+    font-size: 2.2rem;
+    margin-bottom: 4px;
+  }
+  .auth-card h1 {
+    text-align: center;
+    font-size: 1.25rem;
+    color: var(--primary-dark);
+    margin-bottom: 2px;
+  }
+  .auth-sub {
+    text-align: center;
+    color: var(--muted);
+    font-size: .85rem;
+    margin-bottom: 20px;
+  }
+  .auth-card .field-label { margin-top: 14px; }
+  .auth-card .field-label:first-of-type { margin-top: 6px; }
+  .auth-error {
+    display: none;
+    margin-top: 14px;
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: var(--danger-bg);
+    color: var(--danger);
+    font-size: .88rem;
+    font-weight: 600;
+  }
+  .auth-error.show { display: block; }
+  .auth-btn {
+    width: 100%;
+    margin-top: 18px;
+    padding: 13px;
+    font-size: 1rem;
+  }
+  .auth-btn:disabled { opacity: .6; cursor: not-allowed; }
+  .auth-hint {
+    margin-top: 16px;
+    text-align: center;
+    font-size: .75rem;
+    color: var(--muted);
+  }
+  .spinner {
+    display: inline-block;
+    width: 16px; height: 16px;
+    border: 2px solid #fff;
+    border-top-color: transparent;
+    border-radius: 50%;
+    animation: spin .7s linear infinite;
+    vertical-align: -3px;
+    margin-right: 6px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body class="auth-body">
+  <div class="auth-card">
+    <div class="auth-logo">📈</div>
+    <h1>SPC Trainer</h1>
+    <p class="auth-sub" data-i18n="login.sub">Sign in to continue</p>
+
+    <form id="loginForm" autocomplete="off">
+      <label class="field-label" for="username" data-i18n="login.user">Username</label>
+      <input class="input" id="username" name="username" type="text"
+             autocapitalize="none" autocorrect="off" spellcheck="false"
+             required autofocus placeholder="user1 … user30 or admin" data-i18n-ph="login.userPh">
+
+      <label class="field-label" for="password" data-i18n="u.pw">Password</label>
+      <input class="input" id="password" name="password" type="password" required>
+
+      <div class="auth-error" id="err"></div>
+
+      <button class="btn btn-primary auth-btn" id="btnLogin" type="submit" data-i18n="login.signin">Sign in</button>
+    </form>
+
+    <p class="auth-hint" data-i18n="login.hint">Training session · contact admin for your account</p>
+
+    <div style="text-align:center;margin-top:12px;">
+      <select id="langSel" class="input" style="max-width:170px;margin:0 auto;" aria-label="Language"></select>
+    </div>
+  </div>
+
+<script src="js/i18n.js"></script>
+<script>
+(function () {
+  if (typeof t !== 'function') { window.t = function (k) { return k; }; }
+  var L = (typeof LANGS !== 'undefined') ? LANGS : { en: 'English' };
+  var D = (typeof LANG_DIR !== 'undefined') ? LANG_DIR : { en: 'ltr' };
+  window.SPC_LANG = (function () {
+    var s = null;
+    try { s = localStorage.getItem('spcLang'); } catch (e) {}
+    return (s && L[s]) ? s : 'en';
+  })();
+  document.documentElement.lang = window.SPC_LANG;
+  document.documentElement.dir = D[window.SPC_LANG] || 'ltr';
+  document.title = t('login.title');
+  document.querySelectorAll('[data-i18n]').forEach(function (el) { el.textContent = t(el.dataset.i18n); });
+  document.querySelectorAll('[data-i18n-ph]').forEach(function (el) { el.placeholder = t(el.dataset.i18nPh); });
+
+  var sel = document.getElementById('langSel');
+  Object.keys(L).forEach(function (code) {
+    var o = document.createElement('option');
+    o.value = code; o.textContent = L[code];
+    if (code === window.SPC_LANG) o.selected = true;
+    sel.appendChild(o);
+  });
+  sel.setAttribute('aria-label', t('ui.lang'));
+  sel.addEventListener('change', function () {
+    try { localStorage.setItem('spcLang', sel.value); } catch (e) {}
+    location.reload();
+  });
+})();
+</script>
+<script>
+(function () {
+  if (typeof t !== 'function') { window.t = function (k) { return k; }; }
+  var form = document.getElementById('loginForm');
+  var err = document.getElementById('err');
+  var btn = document.getElementById('btnLogin');
+
+  // already logged in? go home
+  fetch('/api/me', { credentials: 'same-origin' })
+    .then(function (r) { if (r.ok) location.replace('/'); })
+    .catch(function () {});
+
+  function showError(msg) {
+    err.textContent = msg;
+    err.classList.add('show');
+  }
+  function clearError() {
+    err.classList.remove('show');
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    clearError();
+    var u = document.getElementById('username').value.trim().toLowerCase();
+    var p = document.getElementById('password').value;
+    if (!u || !p) { showError(t('login.needBoth')); return; }
+
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span>' + t('login.signing');
+
+    fetch('/api/login', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest'
+      },
+      body: JSON.stringify({ username: u, password: p })
+    })
+      .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, d: d }; }); })
+      .then(function (res) {
+        if (!res.ok) { showError(res.d.error || t('login.failed')); return; }
+        location.replace('/');
+      })
+      .catch(function () { showError(t('login.neterr')); })
+      .finally(function () {
+        btn.disabled = false;
+        btn.textContent = t('login.signin');
+      });
+  });
+})();
+</script>
+</body>
+</html>

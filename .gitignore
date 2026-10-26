@@ -1,0 +1,10 @@
+# Python
+__pycache__/
+*.pyc
+
+# User database (contains password hashes and sessions)
+spc_users.db
+
+# OS junk
+Thumbs.db
+Desktop.ini
