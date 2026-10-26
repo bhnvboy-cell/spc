@@ -4,6 +4,17 @@ A production-ready, multi-user Statistical Process Control (SPC) training app fo
 
 **Stack:** vanilla HTML/CSS/JS frontend · Python stdlib backend (zero third-party dependencies) · SQLite storage.
 
+## 📸 Screenshots
+
+|  |  |
+|---|---|
+| ![Learn — Gage R&R lesson](screenshots/learn-lesson-gage-rr.png) | ![Charts — chart selection](screenshots/charts-chart-selection.png) |
+| *Learn — interactive lessons (EN/HI/BN/AR)* | *Charts — all control charts* |
+| ![Cpk — capability analysis](screenshots/cpk-analysis.png) | ![Tools — Gage R&R & Pareto](screenshots/tools-gage-rr-pareto.png) |
+| *Cpk — capability analysis* | *Tools — Gage R&R, Pareto* |
+| ![Quiz](screenshots/quiz.png) |  |
+| *Quiz — scores saved to the server* |  |
+
 ---
 
 ## 🚀 Quick start
